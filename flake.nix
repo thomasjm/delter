@@ -18,6 +18,8 @@
             haskell.compiler.ghc9122
 
             haskell-language-server
+
+            zlib
           ];
 
           shellHook = ''

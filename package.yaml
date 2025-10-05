@@ -21,12 +21,15 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
-- fsnotify
-- filepath
 - directory
-- temporary
+- filepath
+- fsnotify
 - process
+- temporary
 - time
+
+default-extensions:
+- ScopedTypeVariables
 
 ghc-options:
 - -Wall
@@ -63,3 +66,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - delter
+    - sandwich
+    - QuickCheck
