@@ -3,17 +3,16 @@ module Lib (
   , DiffResult(..)
   ) where
 
-import Control.Concurrent
-import Control.Monad
 import Data.Time
-import System.Directory
-import System.Exit
+import System.Exit (ExitCode(..))
 import System.FSNotify hiding (watchDir)
 import qualified System.FSNotify as FS
 import System.FilePath
-import System.IO
-import System.IO.Temp
-import System.Process
+import UnliftIO
+import Control.Monad (unless, forever)
+import UnliftIO.Concurrent (threadDelay)
+import UnliftIO.Directory
+import UnliftIO.Process
 
 
 data DiffResult = DiffResult {

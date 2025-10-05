@@ -1,17 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Control.Exception
-import Control.Monad
-import Control.Monad.IO.Class
+import Control.Monad (when)
 import Data.Time
 import Lib
-import System.Directory
-import System.Exit
+import System.Exit (ExitCode(..))
 import System.FilePath
-import System.IO.Error
-import System.IO.Temp
-import System.Process
 import Test.Sandwich
+import UnliftIO
+import UnliftIO.Directory
+import UnliftIO.Process
 
 main :: IO ()
 main = runSandwichWithCommandLineArgs defaultOptions delterTests
@@ -34,9 +31,9 @@ delterTests = describe "Delter Tests" $ do
       let nonExistentFile = "/tmp/non-existent-file.txt"
       let callback _ = return ()
 
-      result <- liftIO $ try (watchFileForChanges nonExistentFile callback)
+      result <- liftIO $ tryAny (watchFileForChanges nonExistentFile callback)
       case result of
-        Left (ErrorCall msg) -> msg `shouldContain` "File does not exist"
+        Left ex -> show ex `shouldContain` "File does not exist"
         Right _ -> expectationFailure "Should have thrown an error for non-existent file"
 
   describe "Binary diff with xdelta3" $ do
@@ -52,13 +49,13 @@ delterTests = describe "Delter Tests" $ do
         writeFile file1 content1
         writeFile file2 content2
 
-        result <- try $ readProcessWithExitCode
+        result <- tryAny $ readProcessWithExitCode
           "xdelta3"
           ["-e", "-s", file1, file2, patchFile]
           ""
 
         case result of
-          Left (ex :: IOException) ->
+          Left ex ->
             -- Skip test if xdelta3 is not available
             liftIO $ putStrLn $ "Skipping test - xdelta3 not available: " ++ show ex
           Right (exitCode, _, _) -> do

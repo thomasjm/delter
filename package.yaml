@@ -27,6 +27,7 @@ dependencies:
 - process
 - temporary
 - time
+- unliftio
 
 default-extensions:
 - ScopedTypeVariables
