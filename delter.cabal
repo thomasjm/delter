@@ -34,9 +34,11 @@ library
       src
   default-extensions:
       ScopedTypeVariables
+      ImportQualifiedPost
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
+    , bytestring
     , directory
     , filepath
     , fsnotify
@@ -56,9 +58,11 @@ executable delter-exe
       app
   default-extensions:
       ScopedTypeVariables
+      ImportQualifiedPost
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , bytestring
     , delter
     , directory
     , filepath
@@ -80,10 +84,12 @@ test-suite delter-test
       test
   default-extensions:
       ScopedTypeVariables
+      ImportQualifiedPost
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
     , base >=4.7 && <5
+    , bytestring
     , delter
     , directory
     , filepath

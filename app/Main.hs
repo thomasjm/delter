@@ -17,5 +17,5 @@ main = do
       exitFailure
 
 printDiffResult :: DiffResult -> IO ()
-printDiffResult (DiffResult size time) = do
+printDiffResult (DiffResult _bytes size time) = do
   printf "Patch generated: %d bytes in %.3f seconds\n" size (realToFrac time :: Double)

@@ -18,11 +18,12 @@ delterTests = describe "Delter Tests" $ do
 
   describe "DiffResult" $ do
     it "should show size and time correctly" $ do
-      let result = DiffResult 100 (secondsToNominalDiffTime 0.5)
-      show result `shouldBe` "DiffResult {diffSize = 100, diffTime = 0.5s}"
+      let result = DiffResult "test" 100 (secondsToNominalDiffTime 0.5)
+      diffSize result `shouldBe` 100
+      diffTime result `shouldBe` secondsToNominalDiffTime 0.5
 
     it "should handle zero size diffs" $ do
-      let result = DiffResult 0 (secondsToNominalDiffTime 0.1)
+      let result = DiffResult "" 0 (secondsToNominalDiffTime 0.1)
       diffSize result `shouldBe` 0
       diffTime result `shouldBe` secondsToNominalDiffTime 0.1
 

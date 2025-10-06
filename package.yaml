@@ -21,6 +21,7 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- bytestring
 - directory
 - filepath
 - fsnotify
@@ -31,6 +32,7 @@ dependencies:
 
 default-extensions:
 - ScopedTypeVariables
+- ImportQualifiedPost
 
 ghc-options:
 - -Wall

@@ -3,20 +3,23 @@ module Lib (
   , DiffResult(..)
   ) where
 
+import Control.Monad (unless, forever)
+import Data.ByteString (ByteString)
+import Data.ByteString qualified as B
 import Data.Time
 import System.Exit (ExitCode(..))
-import System.FSNotify hiding (watchDir)
 import qualified System.FSNotify as FS
+import System.FSNotify hiding (watchDir)
 import System.FilePath
 import UnliftIO
-import Control.Monad (unless, forever)
 import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Directory
 import UnliftIO.Process
 
 
 data DiffResult = DiffResult {
-  diffSize :: Int
+  diffBytes :: ByteString
+  , diffSize :: Int
   , diffTime :: NominalDiffTime
   } deriving (Show)
 
@@ -62,7 +65,9 @@ handleChange currentFile previousFile callback = do
         endTime <- getCurrentTime
         let timeTaken = diffUTCTime endTime startTime
 
-        callback $ DiffResult patchSize timeTaken
+        patchBytes <- B.readFile patchPath
+
+        callback $ DiffResult patchBytes patchSize timeTaken
 
         copyFile currentFile previousFile
       ExitFailure _ -> do
