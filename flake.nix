@@ -22,6 +22,8 @@
             zlib
 
             pandoc
+            texliveMedium
+
             typst
           ];
 

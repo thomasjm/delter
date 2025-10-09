@@ -2,6 +2,7 @@ module Main (main) where
 
 import Lib
 import Control.Monad (forM_, unless)
+import Data.Time
 import System.Environment
 import System.Exit
 import Text.Printf
@@ -46,13 +47,16 @@ compileTypst inputFile outputFile = do
   if not inputExists
     then putStrLn $ "Warning: " ++ inputFile ++ " does not exist, skipping"
     else do
+      startTime <- getCurrentTime
       (exitCode, stdoutOutput, stderrOutput) <- readProcessWithExitCode "typst" ["compile", inputFile, outputFile] ""
+      endTime <- getCurrentTime
+      let compilationTime = diffUTCTime endTime startTime
       case exitCode of
         ExitSuccess -> do
-          printf "✓ Successfully compiled %s\n" inputFile
+          printf "✓ Successfully compiled %s in %.3f seconds\n" inputFile (realToFrac compilationTime :: Double)
           unless (null stdoutOutput) $ putStrLn $ "  Output: " ++ stdoutOutput
         ExitFailure code -> do
-          printf "✗ Failed to compile %s (exit code %d)\n" inputFile code
+          printf "✗ Failed to compile %s (exit code %d) after %.3f seconds\n" inputFile code (realToFrac compilationTime :: Double)
           unless (null stderrOutput) $ putStrLn $ "  Error: " ++ stderrOutput
 
 printDiffResult :: DiffResult -> IO ()
