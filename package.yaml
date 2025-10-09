@@ -59,6 +59,16 @@ executables:
     dependencies:
     - delter
 
+  typst-test:
+    main:                Main.hs
+    source-dirs:         app/typst-test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - delter
+
 tests:
   delter-test:
     main:                Spec.hs

@@ -56,7 +56,7 @@ handleChange currentFile previousFile callback = do
     hClose patchHandle
 
     (exitCode, _, errorOutput) <- readProcessWithExitCode "xdelta3" [
-      "-e", "-s", previousFile, currentFile, patchPath
+      "-e", "-f", "-s", previousFile, currentFile, patchPath
       ] ""
 
     case exitCode of

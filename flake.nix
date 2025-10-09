@@ -20,6 +20,9 @@
             haskell-language-server
 
             zlib
+
+            pandoc
+            typst
           ];
 
           shellHook = ''
