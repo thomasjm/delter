@@ -1,6 +1,6 @@
 
 import Control.Monad
-import Data.ByteString qualified as B
+import qualified Data.ByteString as B
 import qualified Delter.Executable as Exe
 import qualified Data.Text as T
 import qualified Delter.FFI as FFI
@@ -8,12 +8,10 @@ import Test.Sandwich
 import UnliftIO
 
 
-testImplementations :: [
-  (String
-  , FilePath -> (FFI.DiffResult -> IO ()) -> IO ()
-  , B.ByteString -> B.ByteString -> IO FFI.DiffResult
-  )
-  ]
+type WatchFn = FilePath -> (FFI.DiffResult -> IO ()) -> IO ()
+type DiffFn = B.ByteString -> B.ByteString -> IO FFI.DiffResult
+
+testImplementations :: [(String, WatchFn, DiffFn)]
 testImplementations = [
   ("Delter.FFI", FFI.watchFileForChanges, FFI.diffByteStrings)
   , ("Delter.Executable", Exe.watchFileForChanges, Exe.diffByteStrings)
@@ -43,6 +41,13 @@ delterTests = describe "Delter Tests" $ do
 
         when (patchSize == 0) $
           fail $ name ++ " patch size should not be zero for different content"
+
+testByteStringDiffAndPatch :: MonadIO m => DiffFn -> B.ByteString -> B.ByteString -> m ()
+testByteStringDiffAndPatch diffFn content1 content2 = do
+  diff <- liftIO $ diffFn content1 content2
+
+  -- TODO: verify that applying diff to content1 produces content2
+  return ()
 
 
 main :: IO ()
