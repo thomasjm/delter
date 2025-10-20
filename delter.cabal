@@ -162,7 +162,9 @@ test-suite tests
     , filepath
     , fsnotify
     , process
+    , quickcheck-instances
     , sandwich
+    , sandwich-quickcheck
     , temporary
     , text
     , time

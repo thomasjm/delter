@@ -1,10 +1,14 @@
+{-# LANGUAGE TypeApplications #-}
 
 import Control.Monad
 import qualified Data.ByteString as B
-import qualified Delter.Executable as Exe
 import qualified Data.Text as T
+import qualified Delter.Executable as Exe
 import qualified Delter.FFI as FFI
+import Test.QuickCheck
+import Test.QuickCheck.Instances.ByteString ()
 import Test.Sandwich
+import Test.Sandwich.QuickCheck
 import UnliftIO
 
 
@@ -19,7 +23,7 @@ testImplementations = [
   ]
 
 delterTests :: TopSpec
-delterTests = describe "Delter Tests" $ do
+delterTests = introduceQuickCheck $ describe "Delter Tests" $ do
   forM_ testImplementations $ \(name, watchFn, diffFn, patchFn) -> describe name $ do
     describe "File diff generation" $ do
       it "should handle non-existent file gracefully" $ do
@@ -49,8 +53,13 @@ delterTests = describe "Delter Tests" $ do
 
         testByteStringDiffAndPatch diffFn patchFn content1 content2
 
+    describe "QuickCheck property tests" $ introduceQuickCheck $ do
+      prop "should support round-trip diff and patch on arbitrary ByteStrings" $ do
+        bs1 :: B.ByteString <- arbitrary
+        bs2 :: B.ByteString <- arbitrary
+        return $ ioProperty $ testByteStringDiffAndPatch diffFn patchFn bs1 bs2
 
-testByteStringDiffAndPatch :: (MonadIO m) => DiffFn -> PatchFn -> B.ByteString -> B.ByteString -> m ()
+testByteStringDiffAndPatch :: MonadIO m => DiffFn -> PatchFn -> B.ByteString -> B.ByteString -> m ()
 testByteStringDiffAndPatch diffFn patchFn content1 content2 = do
   -- Generate diff from content1 to content2
   diff <- liftIO $ diffFn content2 content1
@@ -59,10 +68,10 @@ testByteStringDiffAndPatch diffFn patchFn content1 content2 = do
   -- Apply patch to content1 to get back content2
   result <- liftIO $ patchFn patchBytes content1
   case result of
-    Left err -> expectationFailure $ "Patch failed: " ++ err
+    Left err -> error $ "Patch failed: " ++ err
     Right patchedContent ->
       when (patchedContent /= content2) $
-        expectationFailure $ "Round-trip failed: patched content doesn't match original target"
+        error "Round-trip failed: patched content doesn't match original target"
 
 
 main :: IO ()

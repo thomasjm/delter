@@ -102,5 +102,7 @@ tests:
     dependencies:
     - delter
     - sandwich
+    - sandwich-quickcheck
     - text
     - QuickCheck
+    - quickcheck-instances
