@@ -8,14 +8,14 @@ import Control.Monad (unless, forever)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as B
 import Data.Time
+import qualified Delter.FFI.C as XD3
+import Delter.Types
 import qualified System.FSNotify as FS
 import System.FSNotify hiding (watchDir)
 import System.FilePath
 import UnliftIO
 import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Directory
-import qualified Delter.FFI.C as XD3
-import Delter.Types
 
 watchFileForChanges :: FilePath -> (DiffResult -> IO ()) -> IO ()
 watchFileForChanges filePath callback = do
@@ -26,7 +26,8 @@ watchFileForChanges filePath callback = do
   absDirPath <- makeAbsolute watchDir
 
   fileExists <- doesFileExist absFilePath
-  unless fileExists $ error $ "File does not exist: " ++ absFilePath
+  unless fileExists $
+    throwIO $ userError $ "File does not exist: " ++ absFilePath
 
   withSystemTempDirectory "delter" $ \tempDir -> do
     let tempFilePath = tempDir </> "previous_" ++ fileName
@@ -46,7 +47,7 @@ watchFileForChanges filePath callback = do
 diffByteStrings :: ByteString -> ByteString -> IO DiffResult
 diffByteStrings currentBytes previousBytes = do
   startTime <- getCurrentTime
-  
+
   result <- XD3.encodeMemory currentBytes previousBytes
   case result of
     Right patchBytes -> do

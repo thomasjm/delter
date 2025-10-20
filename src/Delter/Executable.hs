@@ -1,5 +1,6 @@
 module Delter.Executable (
   watchFileForChanges
+  , diffByteStrings
   , DiffResult(..)
   ) where
 
@@ -25,7 +26,8 @@ watchFileForChanges filePath callback = do
   absDirPath <- makeAbsolute watchDir
 
   fileExists <- doesFileExist absFilePath
-  unless fileExists $ error $ "File does not exist: " ++ absFilePath
+  unless fileExists $
+    throwIO $ userError $ "File does not exist: " ++ absFilePath
 
   withSystemTempDirectory "delter" $ \tempDir -> do
     let tempFilePath = tempDir </> "previous_" ++ fileName
@@ -41,15 +43,21 @@ watchFileForChanges filePath callback = do
       putStrLn $ "Watching " ++ absFilePath ++ " for changes (Ctrl+C to stop)..."
       forever $ threadDelay 1000000
 
-handleChange :: FilePath -> FilePath -> (DiffResult -> IO ()) -> IO ()
-handleChange currentFile previousFile callback = do
+-- | Generate a binary diff between two ByteStrings using external xdelta3 binary
+diffByteStrings :: B.ByteString -> B.ByteString -> IO DiffResult
+diffByteStrings currentBytes previousBytes = do
   startTime <- getCurrentTime
 
-  withSystemTempFile "diff.patch" $ \patchPath patchHandle -> do
-    hClose patchHandle
+  withSystemTempDirectory "delter-executable" $ \tempDir -> do
+    let currentPath = tempDir </> "current"
+        previousPath = tempDir </> "previous"
+        patchPath = tempDir </> "patch"
+
+    B.writeFile currentPath currentBytes
+    B.writeFile previousPath previousBytes
 
     (exitCode, _, errorOutput) <- readProcessWithExitCode "xdelta3" [
-      "-e", "-f", "-s", previousFile, currentFile, patchPath
+      "-e", "-f", "-s", previousPath, currentPath, patchPath
       ] ""
 
     case exitCode of
@@ -59,9 +67,15 @@ handleChange currentFile previousFile callback = do
         let timeTaken = diffUTCTime endTime startTime
 
         patchBytes <- B.readFile patchPath
-
-        callback $ DiffResult patchBytes patchSize timeTaken
-
-        copyFile currentFile previousFile
+        return $ DiffResult patchBytes patchSize timeTaken
       ExitFailure _ -> do
-        putStrLn $ "xdelta3 error: " ++ errorOutput
+        error $ "xdelta3 error: " ++ errorOutput
+
+handleChange :: FilePath -> FilePath -> (DiffResult -> IO ()) -> IO ()
+handleChange currentFile previousFile callback = do
+  currentBytes <- B.readFile currentFile
+  previousBytes <- B.readFile previousFile
+
+  diffResult <- diffByteStrings currentBytes previousBytes
+  callback diffResult
+  copyFile currentFile previousFile

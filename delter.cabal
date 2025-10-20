@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.38.0.
+-- This file has been generated from package.yaml by hpack version 0.38.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -25,7 +25,6 @@ source-repository head
 
 library
   exposed-modules:
-      Delter
       Delter.FFI
       Delter.Executable
   other-modules:
@@ -34,8 +33,10 @@ library
   hs-source-dirs:
       src
   default-extensions:
-      ScopedTypeVariables
       ImportQualifiedPost
+      LambdaCase
+      OverloadedStrings
+      ScopedTypeVariables
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   cc-options: -std=c11 -DHAVE_CONFIG_H
   include-dirs:
@@ -65,8 +66,10 @@ executable delter-exe
   hs-source-dirs:
       app
   default-extensions:
-      ScopedTypeVariables
       ImportQualifiedPost
+      LambdaCase
+      OverloadedStrings
+      ScopedTypeVariables
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
@@ -90,8 +93,10 @@ executable pandoc-test
   hs-source-dirs:
       app/pandoc-test
   default-extensions:
-      ScopedTypeVariables
       ImportQualifiedPost
+      LambdaCase
+      OverloadedStrings
+      ScopedTypeVariables
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
@@ -115,8 +120,10 @@ executable typst-test
   hs-source-dirs:
       app/typst-test
   default-extensions:
-      ScopedTypeVariables
       ImportQualifiedPost
+      LambdaCase
+      OverloadedStrings
+      ScopedTypeVariables
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
@@ -141,8 +148,10 @@ test-suite tests
   hs-source-dirs:
       test
   default-extensions:
-      ScopedTypeVariables
       ImportQualifiedPost
+      LambdaCase
+      OverloadedStrings
+      ScopedTypeVariables
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
@@ -155,6 +164,7 @@ test-suite tests
     , process
     , sandwich
     , temporary
+    , text
     , time
     , unliftio
   default-language: Haskell2010

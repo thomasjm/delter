@@ -31,8 +31,10 @@ dependencies:
 - unliftio
 
 default-extensions:
-- ScopedTypeVariables
 - ImportQualifiedPost
+- LambdaCase
+- OverloadedStrings
+- ScopedTypeVariables
 
 ghc-options:
 - -Wall
@@ -48,12 +50,11 @@ ghc-options:
 library:
   source-dirs: src
   exposed-modules:
-    - Delter
-    - Delter.FFI
-    - Delter.Executable
+  - Delter.FFI
+  - Delter.Executable
   other-modules:
-    - Delter.Types
-    - Delter.FFI.C
+  - Delter.Types
+  - Delter.FFI.C
   c-sources: cbits/xdelta3.c
   include-dirs: cbits
   install-includes: xdelta3.h
@@ -101,4 +102,5 @@ tests:
     dependencies:
     - delter
     - sandwich
+    - text
     - QuickCheck
