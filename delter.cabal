@@ -30,6 +30,7 @@ library
       Delter.Executable
   other-modules:
       Delter.Types
+      Delter.FFI.C
   hs-source-dirs:
       src
   default-extensions:

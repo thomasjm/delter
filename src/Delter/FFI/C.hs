@@ -1,7 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE CApiFFI #-}
 
-module Xdelta3.FFI (
+module Delter.FFI.C (
   encodeMemory,
   decodeMemory
 ) where

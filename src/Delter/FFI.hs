@@ -14,7 +14,7 @@ import System.FilePath
 import UnliftIO
 import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Directory
-import qualified Xdelta3.FFI as XD3
+import qualified Delter.FFI.C as XD3
 import Delter.Types
 
 watchFileForChanges :: FilePath -> (DiffResult -> IO ()) -> IO ()
