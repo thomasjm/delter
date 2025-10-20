@@ -1,6 +1,7 @@
 module Delter.FFI (
   watchFileForChanges
   , diffByteStrings
+  , patchByteStrings
   , DiffResult(..)
   ) where
 
@@ -57,6 +58,10 @@ diffByteStrings currentBytes previousBytes = do
       return $ DiffResult patchBytes patchSize timeTaken
     Left errorMsg -> do
       error $ "xdelta3 error: " ++ errorMsg
+
+-- | Apply a binary patch to a ByteString using C FFI
+patchByteStrings :: ByteString -> ByteString -> IO (Either String ByteString)
+patchByteStrings patch source = XD3.decodeMemory patch source
 
 handleChange :: FilePath -> FilePath -> (DiffResult -> IO ()) -> IO ()
 handleChange currentFile previousFile callback = do

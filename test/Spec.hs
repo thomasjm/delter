@@ -10,16 +10,17 @@ import UnliftIO
 
 type WatchFn = FilePath -> (FFI.DiffResult -> IO ()) -> IO ()
 type DiffFn = B.ByteString -> B.ByteString -> IO FFI.DiffResult
+type PatchFn = B.ByteString -> B.ByteString -> IO (Either String B.ByteString)
 
-testImplementations :: [(String, WatchFn, DiffFn)]
+testImplementations :: [(String, WatchFn, DiffFn, PatchFn)]
 testImplementations = [
-  ("Delter.FFI", FFI.watchFileForChanges, FFI.diffByteStrings)
-  , ("Delter.Executable", Exe.watchFileForChanges, Exe.diffByteStrings)
+  ("Delter.FFI", FFI.watchFileForChanges, FFI.diffByteStrings, FFI.patchByteStrings)
+  , ("Delter.Executable", Exe.watchFileForChanges, Exe.diffByteStrings, Exe.patchByteStrings)
   ]
 
 delterTests :: TopSpec
 delterTests = describe "Delter Tests" $ do
-  forM_ testImplementations $ \(name, watchFn, diffFn) -> describe name $ do
+  forM_ testImplementations $ \(name, watchFn, diffFn, patchFn) -> describe name $ do
     describe "File diff generation" $ do
       it "should handle non-existent file gracefully" $ do
         liftIO (tryAny (watchFn "/tmp/non-existent-file.txt" (const $ return ()))) >>= \case
@@ -42,12 +43,26 @@ delterTests = describe "Delter Tests" $ do
         when (patchSize == 0) $
           fail $ name ++ " patch size should not be zero for different content"
 
-testByteStringDiffAndPatch :: MonadIO m => DiffFn -> B.ByteString -> B.ByteString -> m ()
-testByteStringDiffAndPatch diffFn content1 content2 = do
-  diff <- liftIO $ diffFn content1 content2
+      it "should support round-trip diff and patch" $ do
+        let content1 = "Hello, world! This is the original content."
+        let content2 = "Hello, world! This is the modified content!"
 
-  -- TODO: verify that applying diff to content1 produces content2
-  return ()
+        testByteStringDiffAndPatch diffFn patchFn content1 content2
+
+
+testByteStringDiffAndPatch :: (MonadIO m) => DiffFn -> PatchFn -> B.ByteString -> B.ByteString -> m ()
+testByteStringDiffAndPatch diffFn patchFn content1 content2 = do
+  -- Generate diff from content1 to content2
+  diff <- liftIO $ diffFn content2 content1
+  let patchBytes = FFI.diffBytes diff
+
+  -- Apply patch to content1 to get back content2
+  result <- liftIO $ patchFn patchBytes content1
+  case result of
+    Left err -> expectationFailure $ "Patch failed: " ++ err
+    Right patchedContent ->
+      when (patchedContent /= content2) $
+        expectationFailure $ "Round-trip failed: patched content doesn't match original target"
 
 
 main :: IO ()

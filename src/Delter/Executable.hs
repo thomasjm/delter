@@ -1,7 +1,8 @@
 module Delter.Executable (
   watchFileForChanges
   , diffByteStrings
-  , DiffResult(..)
+  , patchByteStrings
+  ,  DiffResult(..)
   ) where
 
 import Control.Monad (unless, forever)
@@ -16,6 +17,7 @@ import UnliftIO
 import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Directory
 import UnliftIO.Process
+
 
 watchFileForChanges :: FilePath -> (DiffResult -> IO ()) -> IO ()
 watchFileForChanges filePath callback = do
@@ -70,6 +72,30 @@ diffByteStrings currentBytes previousBytes = do
         return $ DiffResult patchBytes patchSize timeTaken
       ExitFailure _ -> do
         error $ "xdelta3 error: " ++ errorOutput
+
+-- | Apply a binary patch to a ByteString using external xdelta3 binary
+patchByteStrings :: B.ByteString -> B.ByteString -> IO (Either String B.ByteString)
+patchByteStrings patch source = do
+  withSystemTempDirectory "delter-patch" $ \tempDir -> do
+    let sourcePath = tempDir </> "source"
+        patchPath = tempDir </> "patch"
+        outputPath = tempDir </> "output"
+
+    B.writeFile sourcePath source
+    B.writeFile patchPath patch
+
+    (exitCode, _, errorOutput) <- readProcessWithExitCode "xdelta3" [
+      "-d", "-f", "-s", sourcePath, patchPath, outputPath
+      ] ""
+
+    case exitCode of
+      ExitSuccess -> do
+        outputExists <- doesFileExist outputPath
+        if outputExists
+          then Right <$> B.readFile outputPath
+          else return $ Left "xdelta3 did not create output file"
+      ExitFailure code ->
+        return $ Left $ "xdelta3 decode failed with code " ++ show code ++ ": " ++ errorOutput
 
 handleChange :: FilePath -> FilePath -> (DiffResult -> IO ()) -> IO ()
 handleChange currentFile previousFile callback = do
