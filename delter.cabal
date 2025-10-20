@@ -18,6 +18,8 @@ build-type:     Simple
 extra-source-files:
     README.md
     CHANGELOG.md
+    cbits/*.h
+    cbits/*.c
 
 source-repository head
   type: git
@@ -26,12 +28,20 @@ source-repository head
 library
   exposed-modules:
       Lib
+      Xdelta3.FFI
   other-modules:
       Paths_delter
   autogen-modules:
       Paths_delter
   hs-source-dirs:
       src
+  c-sources:
+      cbits/xdelta3.c
+  include-dirs:
+      cbits
+  install-includes:
+      xdelta3.h
+  cc-options: -std=c11 -DHAVE_CONFIG_H
   default-extensions:
       ScopedTypeVariables
       ImportQualifiedPost

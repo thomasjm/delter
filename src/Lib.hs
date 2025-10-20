@@ -7,14 +7,13 @@ import Control.Monad (unless, forever)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as B
 import Data.Time
-import System.Exit (ExitCode(..))
 import qualified System.FSNotify as FS
 import System.FSNotify hiding (watchDir)
 import System.FilePath
 import UnliftIO
 import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Directory
-import UnliftIO.Process
+import qualified Xdelta3.FFI as XD3
 
 
 data DiffResult = DiffResult {
@@ -52,23 +51,17 @@ handleChange :: FilePath -> FilePath -> (DiffResult -> IO ()) -> IO ()
 handleChange currentFile previousFile callback = do
   startTime <- getCurrentTime
 
-  withSystemTempFile "diff.patch" $ \patchPath patchHandle -> do
-    hClose patchHandle
+  currentBytes <- B.readFile currentFile
+  previousBytes <- B.readFile previousFile
 
-    (exitCode, _, errorOutput) <- readProcessWithExitCode "xdelta3" [
-      "-e", "-f", "-s", previousFile, currentFile, patchPath
-      ] ""
+  result <- XD3.encodeMemory currentBytes previousBytes
+  case result of
+    Right patchBytes -> do
+      endTime <- getCurrentTime
+      let timeTaken = diffUTCTime endTime startTime
+          patchSize = B.length patchBytes
 
-    case exitCode of
-      ExitSuccess -> do
-        patchSize <- fromIntegral <$> getFileSize patchPath
-        endTime <- getCurrentTime
-        let timeTaken = diffUTCTime endTime startTime
-
-        patchBytes <- B.readFile patchPath
-
-        callback $ DiffResult patchBytes patchSize timeTaken
-
-        copyFile currentFile previousFile
-      ExitFailure _ -> do
-        putStrLn $ "xdelta3 error: " ++ errorOutput
+      callback $ DiffResult patchBytes patchSize timeTaken
+      copyFile currentFile previousFile
+    Left errorMsg -> do
+      putStrLn $ "xdelta3 error: " ++ errorMsg
