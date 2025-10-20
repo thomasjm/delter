@@ -1,13 +1,14 @@
 module Main (main) where
 
-import Lib
 import Control.Monad (forM_, unless)
 import Data.Time
+import Delter.Executable
 import System.Environment
 import System.Exit
 import Text.Printf
 import UnliftIO.Directory
 import UnliftIO.Process
+
 
 main :: IO ()
 main = do
@@ -23,19 +24,19 @@ main = do
 runTypstTest :: FilePath -> IO ()
 runTypstTest outputFile = do
   let samples = ["sample1.typ", "sample2.typ", "sample3.typ"]
-  
+
   putStrLn "=== Typst Rendering Test ==="
   putStrLn ""
-  
+
   forM_ samples $ \sample -> do
     printf "Compiling %s to %s...\n" sample outputFile
     compileTypst sample outputFile
     putStrLn ""
-  
+
   putStrLn "=== Starting file watcher on sample3.typ ==="
   putStrLn "Edit sample3.typ to see diff results (Ctrl+C to stop)"
   putStrLn ""
-  
+
   watchFileForChanges "sample3.typ" $ \diffResult -> do
     printf "File changed! Recompiling...\n"
     compileTypst "sample3.typ" outputFile

@@ -1,5 +1,6 @@
-module Lib (
+module Delter.FFI (
   watchFileForChanges
+  , diffByteStrings
   , DiffResult(..)
   ) where
 
@@ -14,13 +15,7 @@ import UnliftIO
 import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Directory
 import qualified Xdelta3.FFI as XD3
-
-
-data DiffResult = DiffResult {
-  diffBytes :: ByteString
-  , diffSize :: Int
-  , diffTime :: NominalDiffTime
-  } deriving (Show)
+import Delter.Types
 
 watchFileForChanges :: FilePath -> (DiffResult -> IO ()) -> IO ()
 watchFileForChanges filePath callback = do
@@ -47,21 +42,26 @@ watchFileForChanges filePath callback = do
       putStrLn $ "Watching " ++ absFilePath ++ " for changes (Ctrl+C to stop)..."
       forever $ threadDelay 1000000
 
-handleChange :: FilePath -> FilePath -> (DiffResult -> IO ()) -> IO ()
-handleChange currentFile previousFile callback = do
+-- | Generate a binary diff between two ByteStrings using C FFI
+diffByteStrings :: ByteString -> ByteString -> IO DiffResult
+diffByteStrings currentBytes previousBytes = do
   startTime <- getCurrentTime
-
-  currentBytes <- B.readFile currentFile
-  previousBytes <- B.readFile previousFile
-
+  
   result <- XD3.encodeMemory currentBytes previousBytes
   case result of
     Right patchBytes -> do
       endTime <- getCurrentTime
       let timeTaken = diffUTCTime endTime startTime
           patchSize = B.length patchBytes
-
-      callback $ DiffResult patchBytes patchSize timeTaken
-      copyFile currentFile previousFile
+      return $ DiffResult patchBytes patchSize timeTaken
     Left errorMsg -> do
-      putStrLn $ "xdelta3 error: " ++ errorMsg
+      error $ "xdelta3 error: " ++ errorMsg
+
+handleChange :: FilePath -> FilePath -> (DiffResult -> IO ()) -> IO ()
+handleChange currentFile previousFile callback = do
+  currentBytes <- B.readFile currentFile
+  previousBytes <- B.readFile previousFile
+
+  diffResult <- diffByteStrings currentBytes previousBytes
+  callback diffResult
+  copyFile currentFile previousFile

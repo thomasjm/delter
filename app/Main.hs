@@ -1,9 +1,10 @@
 module Main (main) where
 
-import Lib
+import Delter.Executable
 import System.Environment
 import System.Exit
 import Text.Printf
+
 
 main :: IO ()
 main = do

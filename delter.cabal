@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.38.1.
+-- This file has been generated from package.yaml by hpack version 0.38.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -18,8 +18,6 @@ build-type:     Simple
 extra-source-files:
     README.md
     CHANGELOG.md
-    cbits/*.h
-    cbits/*.c
 
 source-repository head
   type: git
@@ -27,25 +25,24 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
-      Xdelta3.FFI
+      Delter
+      Delter.FFI
+      Delter.Executable
   other-modules:
-      Paths_delter
-  autogen-modules:
-      Paths_delter
+      Delter.Types
   hs-source-dirs:
       src
-  c-sources:
-      cbits/xdelta3.c
-  include-dirs:
-      cbits
-  install-includes:
-      xdelta3.h
-  cc-options: -std=c11 -DHAVE_CONFIG_H
   default-extensions:
       ScopedTypeVariables
       ImportQualifiedPost
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  cc-options: -std=c11 -DHAVE_CONFIG_H
+  include-dirs:
+      cbits
+  install-includes:
+      xdelta3.h
+  c-sources:
+      cbits/xdelta3.c
   build-depends:
       base >=4.7 && <5
     , bytestring
@@ -133,7 +130,7 @@ executable typst-test
     , unliftio
   default-language: Haskell2010
 
-test-suite delter-test
+test-suite tests
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:

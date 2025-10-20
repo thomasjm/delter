@@ -1,41 +1,31 @@
 module Main (main) where
 
-import Lib
 import Control.Monad (forM_, unless)
 import Data.Time
+import Delter.Executable
 import System.Environment
 import System.Exit
 import Text.Printf
 import UnliftIO.Directory
 import UnliftIO.Process
 
-main :: IO ()
-main = do
-  args <- getArgs
-  case args of
-    [outputFile] -> runPandocTest outputFile
-    _ -> do
-      putStrLn "Usage: pandoc-test <output-pdf-file>"
-      putStrLn "  This will compile sample1.md, sample2.md, sample3.md to the output file"
-      putStrLn "  and then watch sample3.md for changes, showing diffs"
-      exitFailure
 
 runPandocTest :: FilePath -> IO ()
 runPandocTest outputFile = do
   let samples = ["sample1.md", "sample2.md", "sample3.md"]
-  
+
   putStrLn "=== Pandoc Markdown to PDF Test ==="
   putStrLn ""
-  
+
   forM_ samples $ \sample -> do
     printf "Converting %s to %s...\n" sample outputFile
     compilePandoc sample outputFile
     putStrLn ""
-  
+
   putStrLn "=== Starting file watcher on sample3.md ==="
   putStrLn "Edit sample3.md to see diff results (Ctrl+C to stop)"
   putStrLn ""
-  
+
   watchFileForChanges "sample3.md" $ \diffResult -> do
     printf "File changed! Recompiling...\n"
     compilePandoc "sample3.md" outputFile
@@ -48,7 +38,7 @@ compilePandoc inputFile outputFile = do
     then putStrLn $ "Warning: " ++ inputFile ++ " does not exist, skipping"
     else do
       startTime <- getCurrentTime
-      (exitCode, stdoutOutput, stderrOutput) <- readProcessWithExitCode "pandoc" 
+      (exitCode, stdoutOutput, stderrOutput) <- readProcessWithExitCode "pandoc"
         [ inputFile
         , "-o", outputFile
         , "--pdf-engine=xelatex"
@@ -68,3 +58,14 @@ compilePandoc inputFile outputFile = do
 printDiffResult :: DiffResult -> IO ()
 printDiffResult (DiffResult _bytes size time) = do
   printf "  → Diff: %d bytes in %.3f seconds\n" size (realToFrac time :: Double)
+
+main :: IO ()
+main = do
+  args <- getArgs
+  case args of
+    [outputFile] -> runPandocTest outputFile
+    _ -> do
+      putStrLn "Usage: pandoc-test <output-pdf-file>"
+      putStrLn "  This will compile sample1.md, sample2.md, sample3.md to the output file"
+      putStrLn "  and then watch sample3.md for changes, showing diffs"
+      exitFailure

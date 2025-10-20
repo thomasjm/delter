@@ -1,8 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Control.Monad (when)
-import Data.Time
-import Lib
+import Data.ByteString qualified as B
+import qualified Delter
+import qualified Delter.Executable as Exe
+import qualified Delter.FFI as FFI
 import System.Exit (ExitCode(..))
 import System.FilePath
 import Test.Sandwich
@@ -10,34 +12,55 @@ import UnliftIO
 import UnliftIO.Directory
 import UnliftIO.Process
 
-main :: IO ()
-main = runSandwichWithCommandLineArgs defaultOptions delterTests
+
+testImplementations :: [(String, FilePath -> (FFI.DiffResult -> IO ()) -> IO ())]
+testImplementations = [
+  ("Delter.FFI", FFI.watchFileForChanges)
+  , ("Delter.Executable", Exe.watchFileForChanges)
+  ]
 
 delterTests :: TopSpec
 delterTests = describe "Delter Tests" $ do
+  mapM_ (\(name, watchFn) -> describe name $ do
+    describe "File diff generation" $ do
+      it "should handle non-existent file gracefully" $ do
+        let nonExistentFile = "/tmp/non-existent-file.txt"
+        let callback _ = return ()
 
-  describe "DiffResult" $ do
-    it "should show size and time correctly" $ do
-      let result = DiffResult "test" 100 (secondsToNominalDiffTime 0.5)
-      diffSize result `shouldBe` 100
-      diffTime result `shouldBe` secondsToNominalDiffTime 0.5
+        result <- liftIO $ tryAny (watchFn nonExistentFile callback)
+        case result of
+          Left ex -> show ex `shouldContain` "File does not exist"
+          Right _ -> expectationFailure "Should have thrown an error for non-existent file"
+    ) testImplementations
 
-    it "should handle zero size diffs" $ do
-      let result = DiffResult "" 0 (secondsToNominalDiffTime 0.1)
-      diffSize result `shouldBe` 0
-      diffTime result `shouldBe` secondsToNominalDiffTime 0.1
+  describe "Binary diff with FFI" $ do
+    it "should create smaller patches for small changes using diffByteStrings" $ do
+      let content1 = B.pack $ replicate 1000 65  -- 1000 'A's
+          content2 = B.pack $ (replicate 999 65) ++ [66]  -- 999 'A's + 'B'
 
-  describe "File diff generation" $ do
-    it "should handle non-existent file gracefully" $ do
-      let nonExistentFile = "/tmp/non-existent-file.txt"
-      let callback _ = return ()
+      result <- liftIO $ FFI.diffByteStrings content2 content1
+      let patchSize = FFI.diffSize result
 
-      result <- liftIO $ tryAny (watchFileForChanges nonExistentFile callback)
-      case result of
-        Left ex -> show ex `shouldContain` "File does not exist"
-        Right _ -> expectationFailure "Should have thrown an error for non-existent file"
+      when (patchSize >= 1000) $
+        fail $ "FFI patch size too large: " ++ show patchSize
 
-  describe "Binary diff with xdelta3" $ do
+      when (patchSize == 0) $
+        fail "FFI patch size should not be zero for different content"
+
+    it "should work with default module diffByteStrings" $ do
+      let content1 = B.pack $ replicate 500 65   -- 500 'A's
+          content2 = B.pack $ (replicate 499 65) ++ [66]  -- 499 'A's + 'B'
+
+      result <- liftIO $ Delter.diffByteStrings content2 content1
+      let patchSize = Delter.diffSize result
+
+      when (patchSize >= 500) $
+        fail $ "Default patch size too large: " ++ show patchSize
+
+      when (patchSize == 0) $
+        fail "Default patch size should not be zero for different content"
+
+  describe "Binary diff with xdelta3 executable (compatibility)" $ do
     it "should create smaller patches for small changes" $ do
       liftIO $ withSystemTempDirectory "delter-test" $ \tempDir -> do
         let file1 = tempDir </> "file1.txt"
@@ -70,3 +93,6 @@ delterTests = describe "Delter Tests" $ do
             patchSize <- getFileSize patchFile
             when (patchSize >= 1000) $
               fail $ "Patch size too large: " ++ show patchSize
+
+main :: IO ()
+main = runSandwichWithCommandLineArgs defaultOptions delterTests

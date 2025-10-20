@@ -47,6 +47,16 @@ ghc-options:
 
 library:
   source-dirs: src
+  exposed-modules:
+    - Delter
+    - Delter.FFI
+    - Delter.Executable
+  other-modules:
+    - Delter.Types
+  c-sources: cbits/xdelta3.c
+  include-dirs: cbits
+  install-includes: xdelta3.h
+  cc-options: -std=c11 -DHAVE_CONFIG_H
 
 executables:
   delter-exe:
@@ -80,7 +90,7 @@ executables:
     - delter
 
 tests:
-  delter-test:
+  tests:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
