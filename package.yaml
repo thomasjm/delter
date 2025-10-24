@@ -61,7 +61,7 @@ library:
   cc-options: -std=c11 -DHAVE_CONFIG_H
 
 executables:
-  delter-exe:
+  delter:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

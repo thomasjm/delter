@@ -49,8 +49,7 @@ diffByteStrings :: ByteString -> ByteString -> IO DiffResult
 diffByteStrings currentBytes previousBytes = do
   startTime <- getCurrentTime
 
-  result <- XD3.encodeMemory currentBytes previousBytes
-  case result of
+  XD3.encodeMemory currentBytes previousBytes >>= \case
     Right patchBytes -> do
       endTime <- getCurrentTime
       let timeTaken = diffUTCTime endTime startTime
@@ -61,7 +60,7 @@ diffByteStrings currentBytes previousBytes = do
 
 -- | Apply a binary patch to a ByteString using C FFI
 patchByteStrings :: ByteString -> ByteString -> IO (Either String ByteString)
-patchByteStrings patch source = XD3.decodeMemory patch source
+patchByteStrings = XD3.decodeMemory
 
 handleChange :: FilePath -> FilePath -> (DiffResult -> IO ()) -> IO ()
 handleChange currentFile previousFile callback = do

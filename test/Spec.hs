@@ -66,8 +66,7 @@ testByteStringDiffAndPatch diffFn patchFn content1 content2 = do
   let patchBytes = FFI.diffBytes diff
 
   -- Apply patch to content1 to get back content2
-  result <- liftIO $ patchFn patchBytes content1
-  case result of
+  liftIO (patchFn patchBytes content1) >>= \case
     Left err -> error $ "Patch failed: " ++ err
     Right patchedContent ->
       when (patchedContent /= content2) $
